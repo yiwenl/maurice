@@ -3,12 +3,13 @@
 import alfrid, { Scene, GL } from 'alfrid';
 import ViewObjModel from './ViewObjModel';
 import View4DCube from './View4DCube';
+import ViewTest from './ViewTest';
 import AnimateCube from './AnimateCube';
 import Assets from './Assets';
 
 import getCubePosition from './utils/getCubePosition';
 
-const numCubes = 75;
+const numCubes = 0;
 const FOV = Math.PI / 3;
 const center = vec3.fromValues(0, 0, 0);
 const up = vec3.fromValues(0, 1, 0);
@@ -50,7 +51,6 @@ class SceneApp extends Scene {
 		this._bDots = new alfrid.BatchDotsPlane();
 		this._bBall = new alfrid.BatchBall();
 
-		// this._vModel = new ViewObjModel();
 
 		this._cubes = [];
 
@@ -68,6 +68,9 @@ class SceneApp extends Scene {
 
 			this._cubes.push(cube);
 		}
+
+
+		this._vTest = new ViewTest();
 	}
 
 
@@ -93,6 +96,7 @@ class SceneApp extends Scene {
 	}
 
 	render() {
+		this._vTest.rotationMask += .01;
 		this.updateProjection();
 
 		this.renderDepth();
@@ -118,6 +122,8 @@ class SceneApp extends Scene {
 		this._renderCubes();
 
 
+
+
 		s = 200;
 		GL.viewport(0, 0, s, s);
 		this._bCopy.draw(this._fbo.getDepthTexture());
@@ -128,6 +134,8 @@ class SceneApp extends Scene {
 		this._cubes.forEach(cube => {
 			cube.render(this._shadowMatrix, this._fbo.getDepthTexture());
 		});	
+
+		this._vTest.render(this._shadowMatrix, this._fbo.getDepthTexture());
 	}
 
 
