@@ -25,7 +25,7 @@ class SceneApp extends Scene {
 		this._bDots = new alfrid.BatchDotsPlane();
 		this._bSky = new alfrid.BatchSkybox();
 
-		this._vModel = new ViewObjModel();
+		// this._vModel = new ViewObjModel();
 	}
 
 
@@ -39,7 +39,7 @@ class SceneApp extends Scene {
 		this._bAxis.draw();
 		this._bDots.draw();
 
-		this._vModel.render(Assets.get('studio_radiance'), Assets.get('irr'), Assets.get('aomap'));
+		// this._vModel.render(Assets.get('studio_radiance'), Assets.get('irr'), Assets.get('aomap'));
 	}
 
 
