@@ -38,9 +38,10 @@ function getRandomEase() {
 
 class AnimateCube extends View4DCube {
 	
-	constructor() {
-		super();
+	constructor(mPosition, mMovingDist = 1.25) {
+		super(mPosition);
 		this._func = getRandomEase();
+		this._movingDistance = mMovingDist;
 
 		this._quat = quat.create();
 		this._quatMask = quat.create();
@@ -51,8 +52,8 @@ class AnimateCube extends View4DCube {
 		this._quatCurr = quat.create();
 		this._quatMaskCurr = quat.create();
 
-		this._pos = vec3.fromValues(0, 0, 0);
-		this._posTarget = vec3.fromValues(0, 0, 0);
+		this._pos = vec3.clone(mPosition);
+		this._posTarget = vec3.clone(mPosition);
 
 		this._posMask = vec3.fromValues(0, 0, 0);
 		this._posMaskTarget = vec3.fromValues(0, 0, 0);
@@ -98,9 +99,10 @@ class AnimateCube extends View4DCube {
 
 	moveTo(mPos, mPosMask, mRot, mRotMask) {
 		this._offset = 0;
+		this._hasCompleted = false;
 
 		vec3.copy(this._pos, this._position);
-		vec3.copy(this._posTarget, mPos);
+		// vec3.copy(this._posTarget, mPos);/
 
 		vec3.copy(this._posMask, this._positionMask);
 		vec3.copy(this._posMaskTarget, mPosMask);
@@ -113,33 +115,12 @@ class AnimateCube extends View4DCube {
 		quat.copy(this._quatMaskTarget, mRotMask);
 	}
 
-	reset() {
-		const d0 = 2;
-		const d1 = 1.25;
-
-		const pos = vec3.fromValues(random(-d0, d0), random(-d0, d0), random(-d0, d0));
-		const posMask = vec3.fromValues(random(-d1, d1), random(-d1, d1), random(-d1, d1));
-
-		const rot = getRandomRotation();
-		const rotMask = getRandomRotation();
-
-		this.moveTo(pos, posMask, rot, rotMask);	
-
-		this._func = getRandomEase();
-		this.speed = random(0.005, 0.02);
-		this.scale = random(.5, 1);
-
-		this.dx = random(.4, .6);		
-		this.dy = random(.4, .6);		
-		this.dz = random(.4, .6);	
-	}
-
 
 	randomTo() {
 		const d0 = 2.5;
-		const d1 = 1.25;
+		const d1 = this._movingDistance;
 
-		const pos = vec3.fromValues(random(-d0, d0), random(-d0, d0), random(-d0, d0));
+		const pos = this.position;
 		const posMask = vec3.fromValues(random(-d1, d1), random(-d1, d1), random(-d1, d1));
 
 		const rot = getRandomRotation();
@@ -151,9 +132,12 @@ class AnimateCube extends View4DCube {
 		this.speed = random(0.005, 0.02);
 		this.scale = random(.5, 1);
 
-		this.dx = random(.4, .6);		
-		this.dy = random(.4, .6);		
-		this.dz = random(.4, .6);		
+
+		const s = .4;
+		const e = .6;
+		this.dx = random(s, e);
+		this.dy = random(s, e);
+		this.dz = random(s, e);
 	}
 
 

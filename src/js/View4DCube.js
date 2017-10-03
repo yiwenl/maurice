@@ -1,6 +1,9 @@
 // View4DCube.js
 
 import alfrid, { GL, GLShader, EaseNumber } from 'alfrid';
+import Assets from './Assets';
+
+
 import vsCube from 'shaders/cube.vert';
 import fsCube from 'shaders/cube.frag';
 
@@ -14,7 +17,7 @@ var random = function(min, max) { return min + Math.random() * (max - min);	}
 
 class View4DCube extends alfrid.View {
 	
-	constructor() {
+	constructor(mPosition=[0, 0, 0]) {
 		super(vsCube, fsCube);
 
 		this._ease = random( 0.02, 0.05 ) * 0.5;
@@ -27,7 +30,7 @@ class View4DCube extends alfrid.View {
 		this.dimension = vec3.fromValues(1, 1, 1);
 		this._rotation = 0;
 		this._rotationAxis = getRandomAxis();
-		this._position = vec3.create();
+		this._position = vec3.clone(mPosition);
 
 		
 		this._rotationMask = 0;
@@ -71,7 +74,7 @@ class View4DCube extends alfrid.View {
 	}
 
 
-	render() {
+	render(mShadowMatrix, mDepthTexture) {
 		this.update();
 
 		const bounds = this._bounds.map( bound => {
@@ -85,6 +88,11 @@ class View4DCube extends alfrid.View {
 		this.shader.bind();
 		this.shader.uniform("uPositionMask", "vec3", this._positionMask);
 		this.shader.uniform(params.light);
+		this.shader.uniform("uShadowMatrix", "mat4", mShadowMatrix);
+		this.shader.uniform("textureDepth", "uniform1i", 0);
+		mDepthTexture.bind(0);
+		this.shader.uniform("texture", "uniform1i", 0);
+		Assets.get('page1').bind(0);
 		bounds.forEach( (bound, i) => {
 			this.shader.uniform(`uPlane${i}`, "vec4", bound);
 		});
@@ -100,6 +108,12 @@ class View4DCube extends alfrid.View {
 		this._shaderPlane.uniform("uDimensionMask", "vec3", this.dimensionMask);
 		this._shaderPlane.uniform("uPositionMask", "vec3", this._positionMask);
 		this._shaderPlane.uniform("uInvertRotationMatrix", "mat4", this._mtxRotationMaskInvert);
+
+		this._shaderPlane.uniform("uShadowMatrix", "mat4", mShadowMatrix);
+		this._shaderPlane.uniform("textureDepth", "uniform1i", 0);
+		mDepthTexture.bind(0);
+		this._shaderPlane.uniform("texture", "uniform1i", 0);
+		Assets.get('page1').bind(0);
 
 		const boundTransformed = vec4.create();
 		bounds.forEach( bound => {
@@ -173,6 +187,14 @@ class View4DCube extends alfrid.View {
 	set rotationMask(mValue) {
 		this._rotationMask = mValue;
 		this._isDirty = true;
+	}
+
+	get position() {
+		return this._position;
+	}
+
+	set position(mValue) {
+		vec3.copy(this._position, mValue);
 	}
 
 

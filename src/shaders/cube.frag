@@ -11,8 +11,13 @@ uniform vec4 uPlane3;
 uniform vec4 uPlane4;
 uniform vec4 uPlane5;
 
+uniform sampler2D texture;
+uniform sampler2D textureDepth;
+
 uniform vec3 uPositionMask;
 uniform vec3 lightDir;
+
+varying vec4 vShadowCoord;
 
 float pointDistToPlane(vec3 v, vec4 plane) {
 	vec3 n = normalize(plane.xyz);
@@ -57,8 +62,27 @@ void main(void) {
 		discard;
 	}
 
-	float d = diffuse(vNormal, lightDir);
-	d = mix(d, 1.0, .5);
+	float _diffuse = diffuse(vNormal, lightDir);
+	_diffuse = mix(_diffuse, 1.0, .5);
 
-    gl_FragColor = vec4(vec3(d), 1.0);
+
+	vec4 shadowCoord = vShadowCoord / vShadowCoord.w;
+	vec2 uv = shadowCoord.xy;
+    float d = texture2D(textureDepth, uv).r;
+
+    const float uBias = 0.001;
+    float visibility = 0.0;
+    if(d < shadowCoord.z - uBias) {
+    	visibility = 1.0;
+    }
+
+    vec3 color = vec3(1.0);
+    vec3 colorMap = texture2D(texture, uv).rgb;
+
+    color = mix(color, colorMap, visibility);
+
+
+    gl_FragColor = vec4(color * _diffuse, 1.0);
+
+    // gl_FragColor = vec4(uv, 1.0, 1.0);
 }
