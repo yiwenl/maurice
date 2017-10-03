@@ -68,21 +68,21 @@ void main(void) {
 
 	vec4 shadowCoord = vShadowCoord / vShadowCoord.w;
 	vec2 uv = shadowCoord.xy;
-    float d = texture2D(textureDepth, uv).r;
+	float d = texture2D(textureDepth, uv).r;
 
-    const float uBias = 0.001;
-    float visibility = 0.0;
-    if(d < shadowCoord.z - uBias) {
-    	visibility = 1.0;
-    }
+	const float uBias = 0.001;
+	float visibility = 0.0;
+	if(d < shadowCoord.z - uBias) {
+		visibility = 1.0;
+	}
 
-    vec3 color = vec3(1.0);
-    vec3 colorMap = texture2D(texture, uv).rgb;
+	vec3 color = vec3(1.0);
+	vec3 colorMap = texture2D(texture, uv).rgb;
 
-    color = mix(color, colorMap, visibility);
+	color = mix(color, colorMap, visibility);
 
 
-    gl_FragColor = vec4(color * _diffuse, 1.0);
+	gl_FragColor = vec4(color * _diffuse, 1.0);
 
-    // gl_FragColor = vec4(uv, 1.0, 1.0);
+	// gl_FragColor = vec4(uv, 1.0, 1.0);
 }

@@ -96,6 +96,7 @@ class SceneApp extends Scene {
 	}
 
 	render() {
+		this._vTest.rotation += .01;
 		this._vTest.rotationMask += .01;
 		this.updateProjection();
 

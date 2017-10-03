@@ -10,6 +10,7 @@ uniform mat4 uViewMatrix;
 uniform mat4 uProjectionMatrix;
 uniform mat4 uShadowMatrix;
 uniform mat3 uNormalMatrix;
+uniform vec3 uPositionMask;
 
 varying vec2 vTextureCoord;
 varying vec3 vNormal;

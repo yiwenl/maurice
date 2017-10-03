@@ -110,6 +110,13 @@ class View4DCube extends alfrid.View {
 		this._shaderMask.uniform("uInvertRotationMatrix", "mat4", this._mtxRotationMaskInvert);
 		this._shaderMask.uniform("uDimension", "vec3", this.dimension);
 		this._shaderMask.uniform("uDimensionMask", "vec3", this.dimensionMask);
+
+		this._shaderMask.uniform("uShadowMatrix", "mat4", mShadowMatrix);
+		this._shaderMask.uniform("textureDepth", "uniform1i", 0);
+		mDepthTexture.bind(0);
+		this._shaderMask.uniform("texture", "uniform1i", 0);
+		Assets.get('page1').bind(0);
+		
 		GL.draw(this.mesh);
 	}
 
