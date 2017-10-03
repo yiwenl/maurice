@@ -9,7 +9,7 @@ import Assets from './Assets';
 
 import getCubePosition from './utils/getCubePosition';
 
-const numCubes = 0;
+const numCubes = 50;
 const FOV = Math.PI / 3;
 const center = vec3.fromValues(0, 0, 0);
 const up = vec3.fromValues(0, 1, 0);
@@ -71,6 +71,9 @@ class SceneApp extends Scene {
 
 
 		this._vTest = new ViewTest();
+
+		this._vTest.rotation = Math.random();
+		this._vTest.rotationMask = Math.random();
 	}
 
 
@@ -96,8 +99,7 @@ class SceneApp extends Scene {
 	}
 
 	render() {
-		this._vTest.rotation += .01;
-		this._vTest.rotationMask += .01;
+		
 		this.updateProjection();
 
 		this.renderDepth();
@@ -136,7 +138,7 @@ class SceneApp extends Scene {
 			cube.render(this._shadowMatrix, this._fbo.getDepthTexture());
 		});	
 
-		this._vTest.render(this._shadowMatrix, this._fbo.getDepthTexture());
+		// this._vTest.render(this._shadowMatrix, this._fbo.getDepthTexture());
 	}
 
 
