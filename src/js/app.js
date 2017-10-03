@@ -16,7 +16,10 @@ if(document.body) {
 
 window.params = {
 	gamma:2.2,
-	exposure:5
+	exposure:5,
+	light:{
+		lightDir:[1, .8, .6]
+	}
 };
 
 function _init() {
@@ -43,14 +46,6 @@ function _init() {
 		_init3D();
 	}
 
-
-	// console.log('process.env.NODE_ENV', process.args);
-	for(let s in process) {
-		console.log(s);
-	}
-
-	console.log(process.env);
-	console.log(process.argv);
 }
 
 
