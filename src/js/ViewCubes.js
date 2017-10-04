@@ -3,6 +3,7 @@
 import alfrid, { GL } from 'alfrid';
 import vs from 'shaders/cubes.vert';
 import fs from 'shaders/cubes.frag';
+import Assets from './Assets';
 
 const numCubes = 50;
 var random = function(min, max) { return min + Math.random() * (max - min);	}
@@ -10,7 +11,7 @@ var random = function(min, max) { return min + Math.random() * (max - min);	}
 class ViewCubes extends alfrid.View {
 	
 	constructor() {
-		super(vs);
+		super(vs, fs);
 	}
 
 
@@ -36,8 +37,23 @@ class ViewCubes extends alfrid.View {
 	}
 
 
-	render() {
+	render(mShadowMatrices, mDepthTextures) {
 		this.shader.bind();
+		this.shader.uniform("uBias", "float", params.bias);
+
+		this.shader.uniform("texture0", "uniform1i", 0);
+		Assets.get('page0').bind(0);
+		this.shader.uniform("texture1", "uniform1i", 1);
+		Assets.get('page1').bind(1);
+		this.shader.uniform("texture2", "uniform1i", 2);
+		Assets.get('page2').bind(2);
+
+		for(let i=0; i<3; i++) {
+			this.shader.uniform(`uShadowMatrix${i}`, "mat4", mShadowMatrices[i]);
+
+			this.shader.uniform(`textureDepth${i}`, "uniform1i", i+3);
+			mDepthTextures[i].bind(i+3);
+		}
 		GL.draw(this.mesh);
 	}
 

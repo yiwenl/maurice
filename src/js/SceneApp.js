@@ -61,6 +61,10 @@ class SceneApp extends Scene {
 			const fboDepth = new alfrid.FrameBuffer(1024, 1024, {minFilter:GL.NEAREST, magFilter:GL.NEAREST, wrapS:GL.CLAMP_TO_EDGE, wrapT:GL.CLAMP_TO_EDGE});
 			this._textureDepths.push(fboDepth);
 		}
+
+		this._textures = this._textureDepths.map(fbo=>{
+			return fbo.getDepthTexture();
+		});
 	}
 
 
@@ -104,13 +108,13 @@ class SceneApp extends Scene {
 		this._bBall.draw(this._cameraCurr.position, [s, s, s], [1, 1, 1]);
 		this._bBall.draw(this._cameraPre.position, [s, s, s], [.5, 1, .5]);
 
-		this._vCubes.render(this._projMatrices, this._textureDepths);
+		this._vCubes.render(this._projMatrices, this._textures);
 
 
 		s = 256;
-		this._textureDepths.forEach((fbo, i) => {
+		this._textures.forEach((t, i) => {
 			GL.viewport(i * s, 0, s, s);
-			this._bCopy.draw(fbo.getDepthTexture());
+			this._bCopy.draw(t);
 		})
 	}
 
@@ -142,8 +146,12 @@ class SceneApp extends Scene {
 			fbo.bind();
 			GL.clear(1, 0, 0, 1);
 			GL.setMatrices(camera);
-			this._vCubes.render();
+			this._vCubes.render(this._projMatrices, this._textures);
 			fbo.unbind();
+		});
+
+		this._textures = this._textureDepths.map(fbo=>{
+			return fbo.getDepthTexture();
 		});
 	}
 
