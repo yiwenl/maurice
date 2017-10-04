@@ -16,10 +16,7 @@ if(document.body) {
 
 window.params = {
 	gamma:2.2,
-	exposure:5,
-	light:{
-		lightDir:[1, .8, .6]
-	}
+	exposure:5
 };
 
 function _init() {

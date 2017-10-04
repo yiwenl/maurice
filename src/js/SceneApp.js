@@ -1,32 +1,33 @@
 // SceneApp.js
 
 import alfrid, { Scene, GL } from 'alfrid';
-import ViewObjModel from './ViewObjModel';
-import View4DCube from './View4DCube';
-import ViewTest from './ViewTest';
-import AnimateCube from './AnimateCube';
+// import ViewObjModel from './ViewObjModel';
+import ViewCubes from './ViewCubes';
 import Assets from './Assets';
 
-import getCubePosition from './utils/getCubePosition';
-
-const numCubes = 50;
-const FOV = Math.PI / 3;
-const center = vec3.fromValues(0, 0, 0);
-const up = vec3.fromValues(0, 1, 0);
+const RAD = Math.PI / 180;
+const FOV = 60 * RAD;
 
 class SceneApp extends Scene {
 	constructor() {
 		super();
 		GL.enableAlphaBlending();
 		this.orbitalControl.rx.value = this.orbitalControl.ry.value = 0.3;
-		this.orbitalControl.radius.value = 10;
-		this.camera.setPerspective(FOV, GL.aspectRatio, 1, 50);
+		this.orbitalControl.radius.value = 5;
+		this.camera.setPerspective(FOV, GL.aspectRatio, .1, 50);
 
-		gui.add(this, 'spin');
+		this._cameraCurr = new alfrid.CameraPerspective();
+		this._camControlCurr = new alfrid.OrbitalControl(this._cameraCurr, window, 5);
+		this._camControlCurr.lock(true);
 
-		this.pointSource = vec3.fromValues(0, 0, 10);
-		this.cameraProj = new alfrid.CameraPerspective();
-		this.cameraProj.setPerspective(FOV, GL.aspectRatio, 1, 50);
+		this._cameraNext = new alfrid.CameraPerspective();
+		this._camControlNext = new alfrid.OrbitalControl(this._cameraNext, window, 5);
+		this._camControlNext.lock(true);
+
+		this._cameraPre = new alfrid.CameraPerspective();
+		this._camControlPre = new alfrid.OrbitalControl(this._cameraPre, window, 5);
+		this._camControlPre.lock(true);
+
 
 		this._biasMatrix = mat4.fromValues(
 			0.5, 0.0, 0.0, 0.0,
@@ -35,110 +36,59 @@ class SceneApp extends Scene {
 			0.5, 0.5, 0.5, 1.0
 		);
 
-		this._shadowMatrix = mat4.create();
 
-		this.resize();
+		this._mtxProjCurr = mat4.create();
+		this._mtxProjNext = mat4.create();
+
+
 	}
 
 	_initTextures() {
-		const size = 1024;
-		this._fbo = new alfrid.FrameBuffer(size, size, {minFilter:GL.NEAREST, magFilter:GL.NEAREST, wrapS:GL.CLAMP_TO_EDGE, wrapT:GL.CLAMP_TO_EDGE});
+		console.log('init textures');
 	}
 
+
 	_initViews() {
+		console.log('init views');
+
 		this._bCopy = new alfrid.BatchCopy();
 		this._bAxis = new alfrid.BatchAxis();
 		this._bDots = new alfrid.BatchDotsPlane();
+
 		this._bBall = new alfrid.BatchBall();
 
+		this._vCubes = new ViewCubes();
 
-		this._cubes = [];
-
-		for(let i=0; i<numCubes; i++) {
-			let pos = getCubePosition(this._cubes, 2.5, .2);
-			let d = 1.25;
-			if(Math.random() > .4)  {
-				d = 0.5;
-			}
-			const cube = new AnimateCube(pos, d);
-			
-			cube.randomTo();
-			cube.rotation = Math.random() * Math.PI * 2;	
-			cube.rotationMask = Math.random() * Math.PI * 2;
-
-			this._cubes.push(cube);
-		}
-
-
-		this._vTest = new ViewTest();
-
-		this._vTest.rotation = Math.random();
-		this._vTest.rotationMask = Math.random();
 	}
 
 
-	spin() {
-		this._cubes.forEach( cube => {
-			cube.randomTo();
-		});
+	_updateMatrix() {
+
+	}
+
+	next() {
+
 	}
 
 
-	updateProjection() {
-		this.cameraProj.lookAt(this.pointSource, center, up);
-		mat4.multiply(this._shadowMatrix, this.cameraProj.projection, this.cameraProj.viewMatrix);
-		mat4.multiply(this._shadowMatrix, this._biasMatrix, this._shadowMatrix);
+	pre() {
+
 	}
 
-	renderDepth() {
-		this._fbo.bind();
-		GL.clear(0, 0, 0, 0);
-		GL.setMatrices(this.cameraProj);
-		this._renderCubes();
-		this._fbo.unbind();
-	}
 
 	render() {
-		
-		this.updateProjection();
-
-		this.renderDepth();
-
-		// this.orbitalControl.ry.value += 0.01;
 		GL.clear(0, 0, 0, 0);
-		GL.setMatrices(this.camera);
-		// this._bSky.draw(Assets.get('studio_radiance'));
-		// this._bSky.draw(Assets.get('irr'));
+		this._camControlPre.ry.setTo(this.orbitalControl.ry.value + Math.PI/2);
+		this._camControlNext.ry.setTo(this.orbitalControl.ry.value - Math.PI/2);
 
 		this._bAxis.draw();
 		this._bDots.draw();
 
-		// this._vModel.render(Assets.get('studio_radiance'), Assets.get('irr'), Assets.get('aomap'));
-
-		// this._vCube.rotation += 0.01;
-		// this._vCube.rotationMask += 0.02;
-		// this._vCube.render();
-
 		let s = .1;
-		this._bBall.draw(this.pointSource, [s, s, s])
+		this._bBall.draw(this._cameraNext.position, [s, s, s], [1, .5, .5]);
+		this._bBall.draw(this._cameraPre.position, [s, s, s], [.5, 1, .5]);
 
-		this._renderCubes();
-
-
-
-
-		s = 200;
-		GL.viewport(0, 0, s, s);
-		this._bCopy.draw(this._fbo.getDepthTexture());
-	}
-
-
-	_renderCubes() {
-		this._cubes.forEach(cube => {
-			cube.render(this._shadowMatrix, this._fbo.getDepthTexture());
-		});	
-
-		// this._vTest.render(this._shadowMatrix, this._fbo.getDepthTexture());
+		this._vCubes.render();
 	}
 
 
