@@ -1,8 +1,6 @@
 // View4DCube.js
 
 import alfrid, { GL, GLShader, EaseNumber } from 'alfrid';
-import Assets from './Assets';
-
 
 import vsCube from 'shaders/cube.vert';
 import fsCube from 'shaders/cube.frag';
@@ -74,7 +72,7 @@ class View4DCube extends alfrid.View {
 	}
 
 
-	render(mShadowMatrix, mDepthTexture) {
+	render(mShadowMatrix, mDepthTexture, texture) {
 		this.update();
 
 		const bounds = this._bounds.map( bound => {
@@ -92,7 +90,7 @@ class View4DCube extends alfrid.View {
 		this.shader.uniform("textureDepth", "uniform1i", 0);
 		mDepthTexture.bind(0);
 		this.shader.uniform("texture", "uniform1i", 0);
-		Assets.get('page1').bind(0);
+		texture.bind(0);
 		bounds.forEach( (bound, i) => {
 			this.shader.uniform(`uPlane${i}`, "vec4", bound);
 		});
@@ -113,7 +111,7 @@ class View4DCube extends alfrid.View {
 		this._shaderPlane.uniform("textureDepth", "uniform1i", 0);
 		mDepthTexture.bind(0);
 		this._shaderPlane.uniform("texture", "uniform1i", 0);
-		Assets.get('page1').bind(0);
+		texture.bind(0);
 
 		const boundTransformed = vec4.create();
 		bounds.forEach( bound => {

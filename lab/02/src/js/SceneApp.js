@@ -4,6 +4,7 @@ import alfrid, { Scene, GL } from 'alfrid';
 import ViewObjModel from './ViewObjModel';
 import View4DCube from './View4DCube';
 import ViewTest from './ViewTest';
+import ViewBackground from './ViewBackground';
 import AnimateCube from './AnimateCube';
 import Assets from './Assets';
 
@@ -11,7 +12,9 @@ import getCubePosition from './utils/getCubePosition';
 import getRandomRotation from './utils/getRandomRotation';
 
 const numCubes = 50;
-const FOV = Math.PI / 3;
+const num = 8;
+const RAD = Math.PI / 180;
+const FOV = 60 * RAD;
 const center = vec3.fromValues(0, 0, 0);
 const up = vec3.fromValues(0, 1, 0);
 
@@ -26,11 +29,9 @@ class SceneApp extends Scene {
 		this.camera.setPerspective(FOV, GL.aspectRatio, 1, 50);
 
 		gui.add(this, 'spin');
-		gui.add(this, 'reset');
 
-		this.pointSource = vec3.fromValues(0, 0, 10);
 		this.cameraProj = new alfrid.CameraPerspective();
-		this.cameraProj.setPerspective(FOV, GL.aspectRatio, 1, 50);
+		this.cameraProj.setPerspective(45*RAD, 1, 1, 50);
 
 		this._biasMatrix = mat4.fromValues(
 			0.5, 0.0, 0.0, 0.0,
@@ -40,6 +41,8 @@ class SceneApp extends Scene {
 		);
 
 		this._shadowMatrix = mat4.create();
+
+		this._index = 0;
 
 		this.resize();
 	}
@@ -55,9 +58,16 @@ class SceneApp extends Scene {
 		this._bDots = new alfrid.BatchDotsPlane();
 		this._bBall = new alfrid.BatchBall();
 
+		this._vBg = new ViewBackground();
+		this._vBg.position[2] = -5;
+		this._vBg.scale = [2, 2, 1];
+
+		this._vFg = new ViewBackground();
+		this._vFg.position[2] = 7.5;
+		this._vFg.scale = [.5, .5, 1];
 
 		this._cubes = [];
-		const num = 8;
+		
 		for(let i=0; i<num; i++) {
 			for(let j=0; j<num; j++) {
 				let x = -num/2 + i + .5;
@@ -84,11 +94,13 @@ class SceneApp extends Scene {
 
 
 	spin() {
+		this._vBg.show();
+		this._vFg.hide();
 		// moveTo(mPos, mPosMask, mRot, mRotMask) {
 		this._cubes.forEach( cube => {
 			let d = 2;
 			const { position } = cube;
-			const target = [position[0] + d, position[1], position[2]];
+			const target = [position[0] + d, position[1], position[2] + random(-2, 2)];
 			const targetMask = [- d, random(-d, d), random(-d, d)];
 			const rotation = getRandomRotation();
 			const rotationMask = getRandomRotation();
@@ -98,6 +110,20 @@ class SceneApp extends Scene {
 
 			cube.moveTo(target, targetMask, rotation, rotationMask);
 		});
+
+
+		alfrid.Scheduler.delay(()=>this._onSpinned(), null, 2000);
+	}
+
+
+	_onSpinned() {
+		this._vBg.hide();
+		this._index ++;
+		this._vFg.show();
+
+		alfrid.Scheduler.delay(()=>{
+			this.reset();
+		}, null, 1000);
 	}
 
 
@@ -113,7 +139,8 @@ class SceneApp extends Scene {
 
 
 	updateProjection() {
-		this.cameraProj.lookAt(this.pointSource, center, up);
+		// console.log('Update projection :', this.camera.position);
+		this.cameraProj.lookAt(this.camera.position, center, up);
 		mat4.multiply(this._shadowMatrix, this.cameraProj.projection, this.cameraProj.viewMatrix);
 		mat4.multiply(this._shadowMatrix, this._biasMatrix, this._shadowMatrix);
 	}
@@ -132,39 +159,38 @@ class SceneApp extends Scene {
 
 		this.renderDepth();
 
-		// this.orbitalControl.ry.value += 0.01;
 		GL.clear(1, 1, 1, 1);
 		// GL.clear(0, 0, 0, 0);
 		GL.setMatrices(this.camera);
-		// this._bSky.draw(Assets.get('studio_radiance'));
-		// this._bSky.draw(Assets.get('irr'));
-
-		this._bAxis.draw();
-		this._bDots.draw();
-
-		// this._vModel.render(Assets.get('studio_radiance'), Assets.get('irr'), Assets.get('aomap'));
 
 		// this._vCube.rotation += 0.01;
 		// this._vCube.rotationMask += 0.02;
 		// this._vCube.render();
 
-		let s = .1;
-		this._bBall.draw(this.pointSource, [s, s, s])
+		if(params.render.bg) {
+			this._vBg.render(this._shadowMatrix, this.nextTexture);
+		}
 
 		this._renderCubes();
 
+		if(params.render.fg) {
+			this._vFg.render(this._shadowMatrix, this.currentTexture);
+		}
+		
 
-
-
-		s = 200;
+		let s = 200;
 		GL.viewport(0, 0, s, s);
 		this._bCopy.draw(this._fbo.getDepthTexture());
 	}
 
 
 	_renderCubes() {
+		if(!params.render.cube) {
+			return;
+		}
+
 		this._cubes.forEach(cube => {
-			cube.render(this._shadowMatrix, this._fbo.getDepthTexture());
+			cube.render(this._shadowMatrix, this._fbo.getDepthTexture(), this.currentTexture);
 		});	
 
 		// this._vTest.render(this._shadowMatrix, this._fbo.getDepthTexture());
@@ -172,8 +198,19 @@ class SceneApp extends Scene {
 
 
 	resize() {
+		console.log(window.innerWidth, window.innerHeight);
 		GL.setSize(window.innerWidth, window.innerHeight);
 		this.camera.setAspectRatio(GL.aspectRatio);
+	}
+
+
+	get currentTexture() {
+		return Assets.get(`page${this._index}`);
+	}
+
+
+	get nextTexture() {
+		return Assets.get(`page${this._index + 1}`);
 	}
 }
 
