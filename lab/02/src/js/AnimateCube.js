@@ -91,19 +91,20 @@ class AnimateCube extends Cube4D {
 		const t = this._func(this._offset);
 		quat.slerp(this._quatCurr, this._quat, this._quatTarget, t);
 		mat4.fromQuat(this._mtxRotation, this._quatCurr);
+		mat4.invert(this._mtxRotationInvert, this._mtxRotation);
 
 		quat.slerp(this._quatMaskCurr, this._quatMask, this._quatMaskTarget, t);
 		mat4.fromQuat(this._mtxRotationMask, this._quatMaskCurr);
 		mat4.invert(this._mtxRotationMaskInvert, this._mtxRotationMask);
 
 		vec3.lerp(this._position, this._pos, this._posTarget, t);
-		vec3.lerp(this._positionMask, this._posMask, this._posMaskTarget, t);
+		vec3.lerp(this._positionMask, this._posMask, this._posMaskTarget, t * t);
 	}
 
 
-	moveTo(mPos, mPosMask, mRot, mRotMask) {
+	moveTo(mPos, mPosMask, mRot, mRotMask, speedMultiplier=1) {
 		this._func = getRandomEase();
-		this.speed = random(0.005, 0.02);
+		this.speed = random(0.005, 0.02) * speedMultiplier;
 
 		this._offset = 0;
 		this._hasCompleted = false;

@@ -27,6 +27,7 @@ class View4DCube {
 
 		this._modelMatrix = mat4.create();
 		this._mtxRotation = mat4.create();
+		this._mtxRotationInvert = mat4.create();
 		this._mtxRotationMask = mat4.create();
 		this._mtxRotationMaskInvert = mat4.create();
 
@@ -62,50 +63,6 @@ class View4DCube {
 		}
 	}
 
-/*
-	render(mShadowMatrix, mDepthTexture) {
-		this.update();
-
-		const bounds = this._bounds.map( bound => {
-			const boundTransformed = vec4.create();
-			vec4.transformMat4(boundTransformed, bound, this._mtxRotationMask);
-
-			return boundTransformed;
-		});
-
-
-		shaderCube.bind();
-		shaderCube.uniform("uPositionMask", "vec3", this._positionMask);
-		shaderCube.uniform(params.light);
-		shaderCube.uniform("uShadowMatrix", "mat4", mShadowMatrix);
-		shaderCube.uniform("textureDepth", "uniform1i", 0);
-		mDepthTexture.bind(0);
-		shaderCube.uniform("texture", "uniform1i", 0);
-		Assets.get('page1').bind(0);
-		bounds.forEach( (bound, i) => {
-			shaderCube.uniform(`uPlane${i}`, "vec4", bound);
-		});
-		GL.rotate(this._modelMatrix);
-		GL.draw(mesh);
-
-
-		mShader.bind();
-		mShader.uniform(params.light);
-		mShader.uniform("uPositionMask", "vec3", this._positionMask);
-		mShader.uniform("uRotationMask", "mat4", this._mtxRotationMask);
-		mShader.uniform("uInvertRotationMatrix", "mat4", this._mtxRotationMaskInvert);
-		mShader.uniform("uDimension", "vec3", this.dimension);
-		mShader.uniform("uDimensionMask", "vec3", this.dimensionMask);
-
-		mShader.uniform("uShadowMatrix", "mat4", mShadowMatrix);
-		mShader.uniform("textureDepth", "uniform1i", 0);
-		mDepthTexture.bind(0);
-		mShader.uniform("texture", "uniform1i", 0);
-		Assets.get('page1').bind(0);
-		
-		GL.draw(mesh);
-	}
-*/	
 
 	renderCube(mShader, mShadowMatrix, mDepthTexture, mTexture) {
 		const bounds = this._bounds.map( bound => {
@@ -118,6 +75,8 @@ class View4DCube {
 
 		mShader.uniform("uPositionMask", "vec3", this._positionMask);
 		mShader.uniform(params.light);
+		mShader.uniform("uInvertRotationMatrix", "mat4", this._mtxRotationInvert);
+		mShader.uniform("uInvertRotationMaskMatrix", "mat4", this._mtxRotationMaskInvert);
 		mShader.uniform("uShadowMatrix", "mat4", mShadowMatrix);
 		mShader.uniform("textureDepth", "uniform1i", 0);
 		mDepthTexture.bind(0);
@@ -132,11 +91,11 @@ class View4DCube {
 
 
 	renderMask(mShader, mShadowMatrix, mDepthTexture, mTexture) {
-		// mShader.bind();
 		mShader.uniform(params.light);
 		mShader.uniform("uPositionMask", "vec3", this._positionMask);
 		mShader.uniform("uRotationMask", "mat4", this._mtxRotationMask);
-		mShader.uniform("uInvertRotationMatrix", "mat4", this._mtxRotationMaskInvert);
+		mShader.uniform("uInvertRotationMatrix", "mat4", this._mtxRotationInvert);
+		mShader.uniform("uInvertRotationMaskMatrix", "mat4", this._mtxRotationMaskInvert);
 		mShader.uniform("uDimension", "vec3", this.dimension);
 		mShader.uniform("uDimensionMask", "vec3", this.dimensionMask);
 
@@ -180,6 +139,7 @@ class View4DCube {
 
 		quat.setAxisAngle(q, this._rotationAxis, this._rotation);
 		mat4.fromQuat(this._mtxRotation, q);
+		mat4.invert(this._mtxRotationInvert, this._mtxRotation);
 
 		quat.setAxisAngle(q, this._rotationAxisMask, this._rotationMask);
 		mat4.fromQuat(this._mtxRotationMask, q);

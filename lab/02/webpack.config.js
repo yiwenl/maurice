@@ -69,6 +69,11 @@ const config = {
 				exclude: pathNodeModules
 			},
 			{
+				test: /\.(png|jpg|gif)$/,
+				use: ['file-loader'],
+				exclude: pathNodeModules
+			},
+			{
 				test: /\.scss$/,
 				use: isProd ?
 				ExtractTextPlugin.extract({

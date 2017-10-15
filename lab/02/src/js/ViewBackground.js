@@ -24,7 +24,7 @@ class ViewBackground extends alfrid.View {
 
 	hide() {
 		this._opacity.value = 0;
-		this._opacity.easing = .1;
+		this._opacity.easing = 1;
 	}
 
 	show() {

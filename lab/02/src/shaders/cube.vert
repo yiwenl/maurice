@@ -8,6 +8,8 @@ attribute vec3 aNormal;
 uniform mat4 uModelMatrix;
 uniform mat4 uViewMatrix;
 uniform mat4 uProjectionMatrix;
+uniform mat4 uRotationMask;
+uniform mat4 uInvertRotationMatrix;
 uniform mat4 uShadowMatrix;
 uniform mat3 uNormalMatrix;
 uniform vec3 uPositionMask;
@@ -23,5 +25,5 @@ void main(void) {
 	vTextureCoord = aTextureCoord;
 	vNormal       = uNormalMatrix * aNormal;
 	vPosition     = position;
-	vShadowCoord  = uShadowMatrix * uModelMatrix * vec4(position, 1.0);
+	vShadowCoord  = uShadowMatrix * uModelMatrix * uInvertRotationMatrix * vec4(position, 1.0);
 }

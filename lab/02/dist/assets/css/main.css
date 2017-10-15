@@ -5,15 +5,8 @@ html, body {
   padding: 0;
   overflow: hidden;
   position: static;
-  /* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#6d6d6d+0,000000+100 */
-  background: #333333;
-  /* Old browsers */
-  background: -moz-radial-gradient(center, ellipse cover, #333333 0%, #000000 100%);
-  /* FF3.6-15 */
-  background: -webkit-radial-gradient(center, ellipse cover, #333333 0%, #000000 100%);
-  /* Chrome10-25,Safari5.1-6 */
-  background: radial-gradient(ellipse at center, #333333 0%, #000000 100%);
-  /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */ }
+  background: white;
+  /* Old browsers */ }
 
 html {
   -webkit-text-size-adjust: none;
@@ -37,6 +30,28 @@ h1, h2, h3, h4, text, p {
   .isLoading .Main-Canvas {
     opacity: 0; }
 
+.button-next {
+  position: fixed;
+  z-index: 9999;
+  width: 65px;
+  height: 29.75px;
+  bottom: 80px;
+  left: 50%;
+  margin-left: -32.5px;
+  border: none;
+  outline: none;
+  background: url(f4c7ed175da4695c7743d2a661416f10.jpg);
+  background-size: 100% 100%;
+  cursor: none;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s ease-out; }
+  .active .button-next {
+    cursor: pointer;
+    opacity: 1;
+    pointer-events: auto;
+    transition: opacity .5s ease-out; }
+
 .Message {
   position: absolute;
   z-index: 999;
@@ -44,7 +59,7 @@ h1, h2, h3, h4, text, p {
   top: calc(50% - 50px);
   text-align: center;
   letter-spacing: 11px;
-  color: white;
+  color: black;
   opacity: 0;
   transition: opacity .5s ease-out, letter-spacing .5s ease-out; }
   .isLoading .Message {
@@ -57,7 +72,7 @@ h1, h2, h3, h4, text, p {
   width: 0%;
   height: 1px;
   top: 50%;
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(0, 0, 0, 0.5);
   opacity: 0;
   transition: width .5s ease-out, opacity .5s ease-out; }
   .isLoading .Loading-Bar {

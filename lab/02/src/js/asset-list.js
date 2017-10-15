@@ -1,6 +1,7 @@
 
 const assetsToLoad = [
 	{"id":"model","url":"assets/obj/model.obj","type":"text"},
+	{"id":"next","url":"assets/img/next.jpg","type":"jpg"},
 	{"id":"page0","url":"assets/img/pages/page0.jpg","type":"jpg"},
 	{"id":"page1","url":"assets/img/pages/page1.jpg","type":"jpg"},
 	{"id":"page10","url":"assets/img/pages/page10.jpg","type":"jpg"},

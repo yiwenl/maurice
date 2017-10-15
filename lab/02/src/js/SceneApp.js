@@ -1,7 +1,6 @@
 // SceneApp.js
 
 import alfrid, { Scene, GL, GLShader } from 'alfrid';
-import ViewObjModel from './ViewObjModel';
 import Cube4D from './Cube4D';
 import ViewBackground from './ViewBackground';
 import AnimateCube from './AnimateCube';
@@ -16,9 +15,9 @@ import fsCube from 'shaders/cube.frag';
 import vsCubeMask from 'shaders/cubeMask.vert';
 import fsCubeMask from 'shaders/cubeMask.frag';
 
-const num = 7;
+const num = 8;
 const RAD = Math.PI / 180;
-const FOV = 60 * RAD;
+const FOV = 65 * RAD;
 const center = vec3.fromValues(0, 0, 0);
 const up = vec3.fromValues(0, 1, 0);
 
@@ -28,14 +27,15 @@ class SceneApp extends Scene {
 	constructor() {
 		super();
 		GL.enableAlphaBlending();
-		// this.orbitalControl.rx.value = this.orbitalControl.ry.value = 0.3;
-		this.orbitalControl.radius.value = 5;
-		const r = 1.1;
+		this.orbitalControl.radius.value = 10;
+		const r = 0.1;
 		this.orbitalControl.rx.limit(-r, r);
 		this.orbitalControl.ry.limit(-r, r);
+		this.orbitalControl.lock(true);
 		this.camera.setPerspective(FOV, GL.aspectRatio, 1, 50);
 
 		gui.add(this, 'spin');
+		gui.add(this, 'preSpin');
 
 		this.cameraProj = new alfrid.CameraPerspective();
 		this.cameraProj.setPerspective(45*RAD, 1, 1, 50);
@@ -55,18 +55,22 @@ class SceneApp extends Scene {
 
 		this.shaderCube = new GLShader(vsCube, fsCube);
 		this.shaderMask = new GLShader(vsCubeMask, fsCubeMask);
+
+		this._btnNext = document.body.querySelector('.button-next');
+		this._btnNext.addEventListener('click', ()=>this.preSpin());
+
+
+		alfrid.Scheduler.delay(()=>{
+			document.body.classList.add('active');
+		}, null, 1000);
 	}
 
 	_initTextures() {
 		const size = 1024;
-		this._fbo = new alfrid.FrameBuffer(size, size, {minFilter:GL.NEAREST, magFilter:GL.NEAREST, wrapS:GL.CLAMP_TO_EDGE, wrapT:GL.CLAMP_TO_EDGE});
+		this._fbo = new alfrid.FrameBuffer(size, size, {minFilter:GL.LINEAR, magFilter:GL.LINEAR, wrapS:GL.CLAMP_TO_EDGE, wrapT:GL.CLAMP_TO_EDGE});
 	}
 
 	_initViews() {
-		this._bCopy = new alfrid.BatchCopy();
-		this._bAxis = new alfrid.BatchAxis();
-		this._bDots = new alfrid.BatchDotsPlane();
-		this._bBall = new alfrid.BatchBall();
 
 		this._vBg = new ViewBackground();
 		this._vBg.position[2] = -5;
@@ -95,25 +99,47 @@ class SceneApp extends Scene {
 			}
 		}
 
-
 		// this._vTest = new Cube4D();
 		// this._vTest.rotationMask = Math.random();
 	}
 
 
-	spin() {
+	preSpin() {
+		document.body.classList.toggle('active', false);
 		this._vBg.show();
 		this._vFg.hide();
-		// moveTo(mPos, mPosMask, mRot, mRotMask) {
-		const r = 2;
+		
+		const r = .2;
+		const angle = .1;
 		this._cubes.forEach( cube => {
-			let d = random(2, 3);
-			if(Math.random() > .5) {
-				d *= -1;
-			}
+			let d = random(1, 3) * .1;
 			const { position } = cube;
 			const target = [position[0], position[1], position[2] + d];
-			const targetMask = [random(-r, r), random(-r, r), -d];
+			const targetMask = [random(-r, r), random(-r, r), -d/2];
+			const rotation = getRandomRotation(angle);
+			const rotationMask = getRandomRotation(angle);
+
+			cube.moveTo(target, targetMask, rotation, rotationMask, 2.5);
+		});
+
+		alfrid.Scheduler.delay(()=>this.spin(), null, 1000);
+	}
+
+
+	spin() {
+		document.body.classList.toggle('active', false);
+		this._vBg.show();
+		this._vFg.hide();
+		
+		const r = 2;
+		this._cubes.forEach( cube => {
+			let d = random(2, 3) * 2;
+			// if(Math.random() > .5) {
+			// 	d *= -1;
+			// }
+			const { position } = cube;
+			const target = [position[0], position[1], position[2] + d];
+			const targetMask = [random(-r, r), random(-r, r), -d/2];
 			const rotation = getRandomRotation();
 			const rotationMask = getRandomRotation();
 
@@ -128,6 +154,9 @@ class SceneApp extends Scene {
 	_onSpinned() {
 		this._vBg.hide();
 		this._index ++;
+		if(this._index >= 18) {
+			this._index = 0;
+		}
 		this._vFg.show();
 
 		alfrid.Scheduler.delay(()=>{
@@ -144,15 +173,17 @@ class SceneApp extends Scene {
 
 			cube.setTo(cube.posOrg, [0, 0, 0], rotation, rotationMask);
 		});
+
+		document.body.classList.toggle('active', true);
 	}
 
 
 	updateProjection() {
-		// console.log('Update projection :', this.camera.position);
 		this.cameraProj.lookAt(this.camera.position, center, up);
 		mat4.multiply(this._shadowMatrix, this.cameraProj.projection, this.cameraProj.viewMatrix);
 		mat4.multiply(this._shadowMatrix, this._biasMatrix, this._shadowMatrix);
 	}
+
 
 	renderDepth() {
 		this._fbo.bind();
@@ -161,6 +192,7 @@ class SceneApp extends Scene {
 		this._renderCubes();
 		this._fbo.unbind();
 	}
+
 
 	render() {
 		this.updateProjection();
@@ -171,24 +203,14 @@ class SceneApp extends Scene {
 
 		this.renderDepth();
 
-		// GL.clear(1, 1, 1, 1);
-		GL.clear(0, 0, 0, 0);
+
+		GL.clear(1, 1, 1, 1);
 		GL.setMatrices(this.camera);
 
-		if(params.render.bg) {
-			this._vBg.render(this._shadowMatrix, this.nextTexture);
-		}
-
+		this._vBg.render(this._shadowMatrix, this.nextTexture);
 		this._renderCubes();
-
-		if(params.render.fg) {
-			this._vFg.render(this._shadowMatrix, this.currentTexture);
-		}
+		this._vFg.render(this._shadowMatrix, this.currentTexture);
 		
-
-		// let s = 200;
-		// GL.viewport(0, 0, s, s);
-		// this._bCopy.draw(this._fbo.getDepthTexture());
 	}
 
 
@@ -212,7 +234,6 @@ class SceneApp extends Scene {
 
 
 	resize() {
-		console.log(window.innerWidth, window.innerHeight);
 		GL.setSize(window.innerWidth, window.innerHeight);
 		this.camera.setAspectRatio(GL.aspectRatio);
 	}
@@ -224,7 +245,8 @@ class SceneApp extends Scene {
 
 
 	get nextTexture() {
-		return Assets.get(`page${this._index + 1}`);
+		const next = this._index === 17 ? 0 : this._index + 1;
+		return Assets.get(`page${next}`);
 	}
 }
 

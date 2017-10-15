@@ -18,12 +18,13 @@ window.params = {
 	gamma:2.2,
 	exposure:5,
 	light:{
-		lightDir:[0, 0, 1]
+		lightDir:[0, 0, 1],
+		ambient:.95
 	},
 	render:{
 		cube:true,
-		bg:false,
-		fg:false
+		bg:true,
+		fg:true
 	}
 };
 
@@ -83,10 +84,4 @@ function _init3D() {
 
 	//	CREATE SCENE
 	const scene = new SceneApp();
-
-	// const fRender = gui.addFolder('rendering');
-	// fRender.add(params.render, 'cube');
-	// fRender.add(params.render, 'fg');
-	// fRender.add(params.render, 'bg');
-	// fRender.open();
 }

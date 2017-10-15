@@ -32,5 +32,5 @@ void main(void) {
     vNormal = uNormalMatrix * N;
     vPosition = position.xyz;
 
-    vShadowCoord  = uShadowMatrix * uModelMatrix * position;
+    vShadowCoord  = uShadowMatrix * uModelMatrix * uInvertRotationMatrix * position;
 }
