@@ -1,9 +1,8 @@
 // SceneApp.js
 
-import alfrid, { Scene, GL } from 'alfrid';
+import alfrid, { Scene, GL, GLShader } from 'alfrid';
 import ViewObjModel from './ViewObjModel';
-import View4DCube from './View4DCube';
-import ViewTest from './ViewTest';
+import Cube4D from './Cube4D';
 import ViewBackground from './ViewBackground';
 import AnimateCube from './AnimateCube';
 import Assets from './Assets';
@@ -11,8 +10,13 @@ import Assets from './Assets';
 import getCubePosition from './utils/getCubePosition';
 import getRandomRotation from './utils/getRandomRotation';
 
-const numCubes = 50;
-const num = 8;
+import vsCube from 'shaders/cube.vert';
+import fsCube from 'shaders/cube.frag';
+
+import vsCubeMask from 'shaders/cubeMask.vert';
+import fsCubeMask from 'shaders/cubeMask.frag';
+
+const num = 7;
 const RAD = Math.PI / 180;
 const FOV = 60 * RAD;
 const center = vec3.fromValues(0, 0, 0);
@@ -25,7 +29,10 @@ class SceneApp extends Scene {
 		super();
 		GL.enableAlphaBlending();
 		// this.orbitalControl.rx.value = this.orbitalControl.ry.value = 0.3;
-		this.orbitalControl.radius.value = 10;
+		this.orbitalControl.radius.value = 5;
+		const r = 1.1;
+		this.orbitalControl.rx.limit(-r, r);
+		this.orbitalControl.ry.limit(-r, r);
 		this.camera.setPerspective(FOV, GL.aspectRatio, 1, 50);
 
 		gui.add(this, 'spin');
@@ -45,6 +52,9 @@ class SceneApp extends Scene {
 		this._index = 0;
 
 		this.resize();
+
+		this.shaderCube = new GLShader(vsCube, fsCube);
+		this.shaderMask = new GLShader(vsCubeMask, fsCubeMask);
 	}
 
 	_initTextures() {
@@ -86,10 +96,8 @@ class SceneApp extends Scene {
 		}
 
 
-		this._vTest = new ViewTest();
-
-		this._vTest.rotation = Math.random();
-		this._vTest.rotationMask = Math.random();
+		// this._vTest = new Cube4D();
+		// this._vTest.rotationMask = Math.random();
 	}
 
 
@@ -97,16 +105,17 @@ class SceneApp extends Scene {
 		this._vBg.show();
 		this._vFg.hide();
 		// moveTo(mPos, mPosMask, mRot, mRotMask) {
+		const r = 2;
 		this._cubes.forEach( cube => {
-			let d = 2;
+			let d = random(2, 3);
+			if(Math.random() > .5) {
+				d *= -1;
+			}
 			const { position } = cube;
-			const target = [position[0] + d, position[1], position[2] + random(-2, 2)];
-			const targetMask = [- d, random(-d, d), random(-d, d)];
+			const target = [position[0], position[1], position[2] + d];
+			const targetMask = [random(-r, r), random(-r, r), -d];
 			const rotation = getRandomRotation();
 			const rotationMask = getRandomRotation();
-
-			cube.rotation = 0;
-			cube.rotationMask = 0;
 
 			cube.moveTo(target, targetMask, rotation, rotationMask);
 		});
@@ -154,18 +163,17 @@ class SceneApp extends Scene {
 	}
 
 	render() {
-		
 		this.updateProjection();
+
+		this._cubes.forEach(cube => {
+			cube.update();
+		});	
 
 		this.renderDepth();
 
-		GL.clear(1, 1, 1, 1);
-		// GL.clear(0, 0, 0, 0);
+		// GL.clear(1, 1, 1, 1);
+		GL.clear(0, 0, 0, 0);
 		GL.setMatrices(this.camera);
-
-		// this._vCube.rotation += 0.01;
-		// this._vCube.rotationMask += 0.02;
-		// this._vCube.render();
 
 		if(params.render.bg) {
 			this._vBg.render(this._shadowMatrix, this.nextTexture);
@@ -178,19 +186,25 @@ class SceneApp extends Scene {
 		}
 		
 
-		let s = 200;
-		GL.viewport(0, 0, s, s);
-		this._bCopy.draw(this._fbo.getDepthTexture());
+		// let s = 200;
+		// GL.viewport(0, 0, s, s);
+		// this._bCopy.draw(this._fbo.getDepthTexture());
 	}
 
 
 	_renderCubes() {
-		if(!params.render.cube) {
-			return;
-		}
+		if(!params.render.cube) { return; }
 
+
+		this.shaderCube.bind();
 		this._cubes.forEach(cube => {
-			cube.render(this._shadowMatrix, this._fbo.getDepthTexture(), this.currentTexture);
+			cube.renderCube(this.shaderCube, this._shadowMatrix, this._fbo.getDepthTexture(), this.currentTexture);
+		});	
+
+
+		this.shaderMask.bind();
+		this._cubes.forEach(cube => {
+			cube.renderMask(this.shaderMask, this._shadowMatrix, this._fbo.getDepthTexture(), this.currentTexture);
 		});	
 
 		// this._vTest.render(this._shadowMatrix, this._fbo.getDepthTexture());

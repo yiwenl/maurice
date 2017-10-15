@@ -78,11 +78,7 @@ void main(void) {
 
 	vec3 color = vec3(1.0);
 	vec3 colorMap = texture2D(texture, uv).rgb;
-
 	color = mix(color, colorMap, visibility);
 
-
 	gl_FragColor = vec4(color * _diffuse, 1.0);
-
-	// gl_FragColor = vec4(uv, 1.0, 1.0);
 }

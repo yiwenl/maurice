@@ -1,25 +1,15 @@
 // View4DCube.js
 
 import alfrid, { GL, GLShader, EaseNumber } from 'alfrid';
-
-import vsCube from 'shaders/cube.vert';
-import fsCube from 'shaders/cube.frag';
-
-import vsPlane from 'shaders/plane.vert';
-import fsPlane from 'shaders/plane.frag';
-
 import getRandomAxis from './utils/getRandomAxis';
 
 var random = function(min, max) { return min + Math.random() * (max - min);	}
+let mesh;
 
-
-class View4DCube extends alfrid.View {
+class View4DCube {
 	
 	constructor(mPosition=[0, 0, 0]) {
-		super(vsCube, fsCube);
-
 		this._ease = random( 0.02, 0.05 ) * 0.5;
-		this._shaderPlane = new GLShader(vsPlane, fsPlane);
 
 		this._isDirty = true;
 		this._scale = new EaseNumber(1, this._ease);
@@ -62,17 +52,18 @@ class View4DCube extends alfrid.View {
 			this._boundBack
 		];
 
+		this._init();
 	}
 
 
 	_init() {
-		this.mesh = alfrid.Geom.cube(1, 1, 1);
-		const s = 2;
-		this.plane = alfrid.Geom.plane(s, s, 1);
+		if(!mesh) {
+			mesh = alfrid.Geom.cube(1, 1, 1);
+		}
 	}
 
-
-	render(mShadowMatrix, mDepthTexture, texture) {
+/*
+	render(mShadowMatrix, mDepthTexture) {
 		this.update();
 
 		const bounds = this._bounds.map( bound => {
@@ -83,43 +74,80 @@ class View4DCube extends alfrid.View {
 		});
 
 
-		this.shader.bind();
-		this.shader.uniform("uPositionMask", "vec3", this._positionMask);
-		this.shader.uniform(params.light);
-		this.shader.uniform("uShadowMatrix", "mat4", mShadowMatrix);
-		this.shader.uniform("textureDepth", "uniform1i", 0);
+		shaderCube.bind();
+		shaderCube.uniform("uPositionMask", "vec3", this._positionMask);
+		shaderCube.uniform(params.light);
+		shaderCube.uniform("uShadowMatrix", "mat4", mShadowMatrix);
+		shaderCube.uniform("textureDepth", "uniform1i", 0);
 		mDepthTexture.bind(0);
-		this.shader.uniform("texture", "uniform1i", 0);
-		texture.bind(0);
+		shaderCube.uniform("texture", "uniform1i", 0);
+		Assets.get('page1').bind(0);
 		bounds.forEach( (bound, i) => {
-			this.shader.uniform(`uPlane${i}`, "vec4", bound);
+			shaderCube.uniform(`uPlane${i}`, "vec4", bound);
 		});
 		GL.rotate(this._modelMatrix);
-		GL.draw(this.mesh);
+		GL.draw(mesh);
 
-		GL.gl.cullFace(GL.gl.FRONT);
 
-		//	draw cull plane
-		this._shaderPlane.bind();
-		this._shaderPlane.uniform(params.light);
-		this._shaderPlane.uniform("uDimension", "vec3", this.dimension);
-		this._shaderPlane.uniform("uDimensionMask", "vec3", this.dimensionMask);
-		this._shaderPlane.uniform("uPositionMask", "vec3", this._positionMask);
-		this._shaderPlane.uniform("uInvertRotationMatrix", "mat4", this._mtxRotationMaskInvert);
+		mShader.bind();
+		mShader.uniform(params.light);
+		mShader.uniform("uPositionMask", "vec3", this._positionMask);
+		mShader.uniform("uRotationMask", "mat4", this._mtxRotationMask);
+		mShader.uniform("uInvertRotationMatrix", "mat4", this._mtxRotationMaskInvert);
+		mShader.uniform("uDimension", "vec3", this.dimension);
+		mShader.uniform("uDimensionMask", "vec3", this.dimensionMask);
 
-		this._shaderPlane.uniform("uShadowMatrix", "mat4", mShadowMatrix);
-		this._shaderPlane.uniform("textureDepth", "uniform1i", 0);
+		mShader.uniform("uShadowMatrix", "mat4", mShadowMatrix);
+		mShader.uniform("textureDepth", "uniform1i", 0);
 		mDepthTexture.bind(0);
-		this._shaderPlane.uniform("texture", "uniform1i", 0);
-		texture.bind(0);
+		mShader.uniform("texture", "uniform1i", 0);
+		Assets.get('page1').bind(0);
+		
+		GL.draw(mesh);
+	}
+*/	
 
-		const boundTransformed = vec4.create();
-		bounds.forEach( bound => {
-			this._shaderPlane.uniform("uPlane", "vec4", bound);
-			GL.draw(this.plane);
+	renderCube(mShader, mShadowMatrix, mDepthTexture, mTexture) {
+		const bounds = this._bounds.map( bound => {
+			const boundTransformed = vec4.create();
+			vec4.transformMat4(boundTransformed, bound, this._mtxRotationMask);
+
+			return boundTransformed;
 		});
 
-		GL.gl.cullFace(GL.gl.BACK);
+
+		mShader.uniform("uPositionMask", "vec3", this._positionMask);
+		mShader.uniform(params.light);
+		mShader.uniform("uShadowMatrix", "mat4", mShadowMatrix);
+		mShader.uniform("textureDepth", "uniform1i", 0);
+		mDepthTexture.bind(0);
+		mShader.uniform("texture", "uniform1i", 0);
+		mTexture.bind(0);
+		bounds.forEach( (bound, i) => {
+			mShader.uniform(`uPlane${i}`, "vec4", bound);
+		});
+		GL.rotate(this._modelMatrix);
+		GL.draw(mesh);
+	}
+
+
+	renderMask(mShader, mShadowMatrix, mDepthTexture, mTexture) {
+		// mShader.bind();
+		mShader.uniform(params.light);
+		mShader.uniform("uPositionMask", "vec3", this._positionMask);
+		mShader.uniform("uRotationMask", "mat4", this._mtxRotationMask);
+		mShader.uniform("uInvertRotationMatrix", "mat4", this._mtxRotationMaskInvert);
+		mShader.uniform("uDimension", "vec3", this.dimension);
+		mShader.uniform("uDimensionMask", "vec3", this.dimensionMask);
+
+		mShader.uniform("uShadowMatrix", "mat4", mShadowMatrix);
+		mShader.uniform("textureDepth", "uniform1i", 0);
+		mDepthTexture.bind(0);
+		mShader.uniform("texture", "uniform1i", 0);
+		mTexture.bind(0);
+		
+		GL.rotate(this._modelMatrix);
+		GL.draw(mesh);
 	}
 
 
@@ -193,6 +221,15 @@ class View4DCube extends alfrid.View {
 
 	set position(mValue) {
 		vec3.copy(this._position, mValue);
+	}
+
+
+	get positionMask() {
+		return this._positionMask;
+	}
+
+	set positionMask(mValue) {
+		vec3.copy(this._positionMask, mValue);
 	}
 
 

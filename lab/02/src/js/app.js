@@ -22,8 +22,8 @@ window.params = {
 	},
 	render:{
 		cube:true,
-		bg:true,
-		fg:true
+		bg:false,
+		fg:false
 	}
 };
 

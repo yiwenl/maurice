@@ -1,7 +1,7 @@
 // AnimateCube.js
 
 import alfrid, { GL } from 'alfrid';
-import View4DCube from './View4DCube';
+import Cube4D from './Cube4D';
 import getRandomPos from './utils/getRandomPos';
 import getRandomRotation from './utils/getRandomRotation';
 
@@ -9,8 +9,12 @@ var random = function(min, max) { return min + Math.random() * (max - min);	}
 const { cos, pow, PI } = Math;
 
 
-const exponentialOut = function(t) {
-  return t == 1.0 ? t : 1.0 - pow(2.0, -10.0 * t);
+const exponentialInOut = function(t) {
+  return t == 0.0 || t == 1.0
+    ? t
+    : t < 0.5
+      ? +0.5 * pow(2.0, (20.0 * t) - 10.0)
+      : -0.5 * pow(2.0, 10.0 - (t * 20.0)) + 1.0;
 }
 
 const cubicInOut = function(t) {
@@ -29,14 +33,14 @@ const sineInOut = function(t) {
 }
 
 function getRandomEase() {
-	const funcs = [exponentialOut, cubicInOut, quadraticInOut, sineInOut];
+	const funcs = [exponentialInOut, cubicInOut, quadraticInOut, sineInOut];
 
 	return funcs[Math.floor(Math.random() * funcs.length)];
 }
 
 
 
-class AnimateCube extends View4DCube {
+class AnimateCube extends Cube4D {
 	
 	constructor(mPosition, mMovingDist = 1.25) {
 		super(mPosition);
@@ -59,7 +63,7 @@ class AnimateCube extends View4DCube {
 		this._posMaskTarget = vec3.fromValues(0, 0, 0);
 
 		this._offset = 1;
-		this.speed = random(0.005, 0.02) * 0.5;
+		this.speed = random(0.005, 0.02);
 		this._hasCompleted = false;
 	}
 
@@ -99,7 +103,7 @@ class AnimateCube extends View4DCube {
 
 	moveTo(mPos, mPosMask, mRot, mRotMask) {
 		this._func = getRandomEase();
-		this.speed = random(0.005, 0.02) * 0.5;
+		this.speed = random(0.005, 0.02);
 
 		this._offset = 0;
 		this._hasCompleted = false;
@@ -121,7 +125,7 @@ class AnimateCube extends View4DCube {
 
 	setTo(mPos, mPosMask, mRot, mRotMask) {
 		this._func = getRandomEase();
-		this.speed = random(0.005, 0.02) * 0.5;
+		this.speed = random(0.005, 0.02);
 
 		this._offset = 1;
 		this._hasCompleted = false;
